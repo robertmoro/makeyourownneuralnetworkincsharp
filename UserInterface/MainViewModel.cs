@@ -1,4 +1,5 @@
-﻿using NeuralNetworkDomain;
+﻿using MathNet.Numerics.LinearAlgebra;
+using NeuralNetworkUsingMathLibrary;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
@@ -17,8 +18,8 @@ namespace NeuralNetworkUserInterface
     {
         private readonly NeuralNetwork _neuralNetwork;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private List<(Matrix Input, byte ExpectedDigit, Matrix ExpectedOutput)> _trainingData = new List<(Matrix Input, byte ExpectedDigit, Matrix ExpectedOutput)>();
-        private List<(Matrix Input, byte ExpectedOutput)> _testData = new List<(Matrix Input, byte ExpectedOutput)>();
+        private List<(Matrix<float> Input, byte ExpectedDigit, Matrix<float> ExpectedOutput)> _trainingData = new List<(Matrix<float> Input, byte ExpectedDigit, Matrix<float> ExpectedOutput)>();
+        private List<(Matrix<float> Input, byte ExpectedOutput)> _testData = new List<(Matrix<float> Input, byte ExpectedOutput)>();
         private string _locationOfMnistFiles;
         private int _trainingSetSizeValue;
         private float _learingRateValue;
@@ -47,10 +48,16 @@ namespace NeuralNetworkUserInterface
 
             _neuralNetwork = new NeuralNetwork(784, 100, 10, LearningRateValue);
 
+            LocationOfMnistFiles = Properties.Settings.Default.LocationOfMnistFiles;
+
             this.WhenAnyValue(x => x.EpochValue, x => x.TrainingSetSizeValue)
                 .Select(tuple => tuple.Item1 * tuple.Item2)
                 .Do(total => RunTrainingCount = total)
                 .Subscribe();
+
+            this.WhenAnyValue(x => x.LocationOfMnistFiles)
+                .Select(x => Unit.Default)
+                .InvokeCommand(this, x => x.StoreSettingsCommand);
 
             BrowseMnistDatabaseFolderCommand = ReactiveCommand.Create(BrowseMnistDatabaseFolder);
             LoadTrainingSet = ReactiveCommand.CreateFromTask(() => LoadTrainingSetCommandAsync());
@@ -59,12 +66,6 @@ namespace NeuralNetworkUserInterface
             LoadTestSet = ReactiveCommand.CreateFromTask(() => LoadTestSetCommandAsync());
             RunTest = ReactiveCommand.CreateFromTask(() => RunTestCommandAsync(runTestProgress), this.WhenAnyValue(x => x.TestSetSizeValue).Select(x => x > 0));
             StoreSettingsCommand = ReactiveCommand.Create(StoreSettings);
-
-            LocationOfMnistFiles = Properties.Settings.Default.LocationOfMnistFiles;
-
-            this.WhenAnyValue(x => x.LocationOfMnistFiles)
-                .Select(x => Unit.Default)
-                .InvokeCommand(this, x => x.StoreSettingsCommand);
         }
 
         private void StoreSettings()
@@ -187,54 +188,7 @@ namespace NeuralNetworkUserInterface
                         progress.Report(++runTrainingProgress);
                     }
                 }
-
-                //int runTrainingProgress = 0;
-
-                //var results = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>();
-
-                //foreach (var epoch in Enumerable.Range(0, EpochValue))
-                //{
-                //    var selectedTrainingDataSet = _trainingData.Take(TrainingSetSizeValue);
-                //    var resultsPerDigit = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>[10];
-                //    var averagesPerDigit = new (Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)[10];
-
-                //    // Run batch in parallel
-                //    Parallel.For(0, 10, digit =>
-                //    {
-                //        resultsPerDigit[digit] = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>();
-
-                //        var collection = selectedTrainingDataSet.Where(stds => stds.ExpectedDigit == digit);
-
-                //        foreach (var d in collection)
-                //        {
-                //            resultsPerDigit[digit].Add(_neuralNetwork.Process(d.Input, d.ExpectedOutput));
-                //            Interlocked.Increment(ref runTrainingProgress);
-                //            progress.Report(runTrainingProgress);
-                //        }
-                //        averagesPerDigit[digit] = Average(resultsPerDigit[digit]);
-                //    });
-
-                //    results.AddRange(averagesPerDigit);
-                //}
-
-                //var result = Average(results);
-
-                //_neuralNetwork.UpdateNeuralNetwork(result.LinkWeightsHiddenOutput, result.LinkWeightsInputHidden);
             });
-        }
-
-        private (Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden) Average(List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)> matrixes)
-        {
-            Matrix linkWeightsHiddenOutputResult = new Matrix(matrixes[0].LinkWeightsHiddenOutput.RowCount, matrixes[0].LinkWeightsHiddenOutput.ColumnCount);
-            Matrix LinkWeightsInputHidden = new Matrix(matrixes[0].LinkWeightsInputHidden.RowCount, matrixes[0].LinkWeightsInputHidden.ColumnCount);
-
-            foreach (var result in matrixes)
-            {
-                linkWeightsHiddenOutputResult += result.LinkWeightsHiddenOutput;
-                LinkWeightsInputHidden += result.LinkWeightsInputHidden;
-            }
-
-            return (linkWeightsHiddenOutputResult / matrixes.Count, LinkWeightsInputHidden / matrixes.Count);
         }
 
         private async Task LoadTrainingSetCommandAsync()
@@ -263,9 +217,9 @@ namespace NeuralNetworkUserInterface
             _testData = images.Zip(expectedValues, (i, ev) => (i, ev)).ToList();
         }
 
-        private async Task<IEnumerable<Matrix>> LoadImages(string fileName, Action<long> setProgressBarMax, Action incrementCounter)
+        private async Task<IEnumerable<Matrix<float>>> LoadImages(string fileName, Action<long> setProgressBarMax, Action incrementCounter)
         {
-            List<Matrix> images = new List<Matrix>();
+            List<Matrix<float>> images = new List<Matrix<float>>();
             FileInfo fileToDecompress = new FileInfo(fileName);
 
             using (FileStream originalFileStream = fileToDecompress.OpenRead())

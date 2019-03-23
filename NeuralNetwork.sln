@@ -9,7 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetwork", "NeuralNetw
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{6A691BBB-E72E-44D4-96AB-09DDD8FA23FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetworkUsingMatrixLibrary", "NeuralNetworkUsingMatrixLibrary\NeuralNetworkUsingMatrixLibrary.csproj", "{12ADB99A-0385-4605-8880-E4EA884B0427}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeuralNetworkUsingMathLibrary", "NeuralNetworkUsingMathLibrary\NeuralNetworkUsingMathLibrary.csproj", "{12ADB99A-0385-4605-8880-E4EA884B0427}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MnistDatabase", "MnistDatabase\MnistDatabase.csproj", "{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,14 @@ Global
 		{12ADB99A-0385-4605-8880-E4EA884B0427}.Release|Any CPU.Build.0 = Release|Any CPU
 		{12ADB99A-0385-4605-8880-E4EA884B0427}.Release|x64.ActiveCfg = Release|Any CPU
 		{12ADB99A-0385-4605-8880-E4EA884B0427}.Release|x64.Build.0 = Release|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Debug|x64.Build.0 = Debug|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Release|x64.ActiveCfg = Release|Any CPU
+		{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

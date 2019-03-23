@@ -1,29 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 
-namespace NeuralNetworkDomain
+namespace NeuralNetworkUsingMathLibrary
 {
     public class NeuralNetwork
     {
         private readonly float _learningRate;
         private readonly Random _random = new Random();
-        private Matrix _linkWeightsInputHidden;
-        private Matrix _linkWeightsHiddenOutput;
+        private Matrix<float> _linkWeightsInputHidden;
+        private Matrix<float> _linkWeightsHiddenOutput;
 
         public NeuralNetwork(int inputNodes, int hiddenNodes, int outputNodes, float learningRate)
         {
             _learningRate = learningRate;
-
-            _linkWeightsInputHidden = new Matrix(hiddenNodes, inputNodes);
-            _linkWeightsInputHidden.Init(() => (float)_random.NextGaussian(1.0, 4.0));
-            //InitLinkWeights(_linkWeightsInputHidden, 1.0, 4.0);
-
-            _linkWeightsHiddenOutput = new Matrix(outputNodes, hiddenNodes);
-            _linkWeightsHiddenOutput.Init(() => (float)_random.NextGaussian(1.0, 4.0));
-            //InitLinkWeights(_linkWeightsHiddenOutput, 1.0, 4.0);
+            MathNet.Numerics.Distributions.IContinuousDistribution distribution = new MathNet.Numerics.Distributions.Normal(0d, Math.Pow(inputNodes, -0.5));
+            _linkWeightsInputHidden = Matrix<float>.Build.Random(hiddenNodes, inputNodes, distribution);
+            _linkWeightsHiddenOutput = Matrix<float>.Build.Random(outputNodes, hiddenNodes, distribution);
         }
 
-        public void Train(Matrix inputs, Matrix targets)
+        public void Train(Matrix<float> inputs, Matrix<float> targets)
         {
             // Calculate signals into hidden layer
             var hidden_inputs = _linkWeightsInputHidden.Multiply(inputs);
@@ -49,7 +44,7 @@ namespace NeuralNetworkDomain
         /// <summary>
         /// Query the neural network
         /// </summary>
-        public List<float> Query(Matrix input)
+        public float[] Query(Matrix<float> input)
         {
             // Calculate signals into hidden layer
             var hidden_inputs = _linkWeightsInputHidden.Multiply(input);
@@ -63,18 +58,7 @@ namespace NeuralNetworkDomain
             // Calculate the signals emerging from final output layer
             var final_outputs = final_inputs.ActivationFunction();
 
-            return final_outputs.Flatten();
-        }
-
-        private void InitLinkWeights(Matrix matrix, double mean, double stdDev)
-        {
-            for (int rowIndex = 0; rowIndex < matrix.RowCount; rowIndex++)
-            {
-                for (int columnIndex = 0; columnIndex < matrix.ColumnCount; columnIndex++)
-                {
-                    matrix[rowIndex, columnIndex] = (float)_random.NextGaussian(mean, stdDev);
-                }
-            }
+            return final_outputs.ToRowMajorArray();
         }
     }
 }
