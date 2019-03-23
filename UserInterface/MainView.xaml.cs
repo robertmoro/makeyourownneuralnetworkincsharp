@@ -6,9 +6,9 @@ namespace NeuralNetworkUserInterface
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : ReactiveWindow<MainViewModel>
+    public partial class MainView : ReactiveWindow<MainViewModel>
     {
-        public MainWindow()
+        public MainView()
         {
             InitializeComponent();
 
@@ -16,6 +16,17 @@ namespace NeuralNetworkUserInterface
 
             this.WhenActivated(disposableRegistration =>
             {
+                // Browse MNIST folder command
+                this.BindCommand(ViewModel,
+                    viewModel => viewModel.BrowseMnistDatabaseFolderCommand,
+                    view => view.BrowseMnistDatabaseFolder)
+                    .DisposeWith(disposableRegistration);
+
+                this.Bind(ViewModel,
+                    viewModel => viewModel.LocationOfMnistFiles,
+                    view => view.LocationOfMnistFiles.Text)
+                    .DisposeWith(disposableRegistration);
+
                 // Load training command
                 this.BindCommand(ViewModel,
                     viewModel => viewModel.LoadTrainingSet,

@@ -9,6 +9,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace NeuralNetworkUserInterface
 {
@@ -16,8 +17,9 @@ namespace NeuralNetworkUserInterface
     {
         private readonly NeuralNetwork _neuralNetwork;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private List<(Matrix Input, Matrix ExpectedOutput)> _trainingData = new List<(Matrix Input, Matrix ExpectedOutput)>();
+        private List<(Matrix Input, byte ExpectedDigit, Matrix ExpectedOutput)> _trainingData = new List<(Matrix Input, byte ExpectedDigit, Matrix ExpectedOutput)>();
         private List<(Matrix Input, byte ExpectedOutput)> _testData = new List<(Matrix Input, byte ExpectedOutput)>();
+        private string _locationOfMnistFiles;
         private int _trainingSetSizeValue;
         private float _learingRateValue;
         private int _epochValue;
@@ -50,6 +52,7 @@ namespace NeuralNetworkUserInterface
                 .Do(total => RunTrainingCount = total)
                 .Subscribe();
 
+            BrowseMnistDatabaseFolderCommand = ReactiveCommand.Create(BrowseMnistDatabaseFolder);
             LoadTrainingSet = ReactiveCommand.CreateFromTask(() => LoadTrainingSetCommandAsync());
             StopLoadTrainingSet = ReactiveCommand.Create(StopLoadTrainingSetCommand);
             RunTraining = ReactiveCommand.CreateFromTask(() => RunTrainingCommandAsync(runTrainingProgress), this.WhenAnyValue(x => x.TrainingSetSizeValue).Select(x => x > 0));
@@ -57,6 +60,7 @@ namespace NeuralNetworkUserInterface
             RunTest = ReactiveCommand.CreateFromTask(() => RunTestCommandAsync(runTestProgress), this.WhenAnyValue(x => x.TestSetSizeValue).Select(x => x > 0));
         }
 
+        public ReactiveCommand<Unit, Unit> BrowseMnistDatabaseFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> LoadTrainingSet { get; }
         public ReactiveCommand<Unit, Unit> StopLoadTrainingSet { get; }
         public ReactiveCommand<Unit, Unit> RunTraining { get; }
@@ -65,33 +69,11 @@ namespace NeuralNetworkUserInterface
         public ReactiveCommand<Unit, Unit> RunTest { get; }
         public ReactiveCommand<Unit, Unit> CancelTest { get; }
 
-        //private IObservable<Unit> RunTrainingCommandAsync()
-        //{
-        //    return Observable.FromAsync(async () => await RunTrainingCommand());
-        //}
-
-        //private IObservable<int> RunTrainingCommand()
-        //{
-        //    return Observable.Create<int>(observer =>
-        //    {
-        //        int runTrainingProgress = 0;
-
-        //        foreach (var epoch in Enumerable.Range(0, EpochValue))
-        //        {
-        //            foreach (var d in _trainingData.Take(TrainingSetSizeValue))
-        //            {
-        //                _neuralNetwork.Train(d.Input, d.ExpectedOutput);
-
-        //                RunTrainingProgress++;
-
-        //                observer.OnNext(++runTrainingProgress);
-        //            }
-        //        }
-        //        observer.OnCompleted();
-
-        //        return () => { };
-        //    });
-        //}
+        public string LocationOfMnistFiles
+        {
+            get => _locationOfMnistFiles;
+            set => this.RaiseAndSetIfChanged(ref _locationOfMnistFiles, value);
+        }
 
         public int TrainingSetCount
         {
@@ -159,6 +141,17 @@ namespace NeuralNetworkUserInterface
             set => this.RaiseAndSetIfChanged(ref _accuracy, value);
         }
 
+        private void BrowseMnistDatabaseFolder()
+        {
+            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+            folderDialog.SelectedPath = "C:\\";
+
+            if (folderDialog.ShowDialog() == DialogResult.OK)
+            {
+                LocationOfMnistFiles = folderDialog.SelectedPath;
+            }
+        }
+
         private void StopLoadTrainingSetCommand()
         {
             _cancellationTokenSource.Cancel();
@@ -169,50 +162,87 @@ namespace NeuralNetworkUserInterface
         {
             await Task.Run(() =>
             {
-                //Environment.ProcessorCount
-                //MinibatchValue
-
                 int runTrainingProgress = 0;
 
                 foreach (var epoch in Enumerable.Range(0, EpochValue))
                 {
                     foreach (var d in _trainingData.Take(TrainingSetSizeValue))
                     {
-                        // Run batch in parallel
-                        Parallel.For(0, MinibatchValue, i =>
-                        {
-                            _neuralNetwork.Train(d.Input, d.ExpectedOutput);
+                        _neuralNetwork.Train(d.Input, d.ExpectedOutput);
 
-                            //progress.Report(++runTrainingProgress);
-                        });
-                        // Combine results
-                        runTrainingProgress += MinibatchValue * Environment.ProcessorCount;
-                        progress.Report(runTrainingProgress);
+                        progress.Report(++runTrainingProgress);
                     }
                 }
+
+                //int runTrainingProgress = 0;
+
+                //var results = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>();
+
+                //foreach (var epoch in Enumerable.Range(0, EpochValue))
+                //{
+                //    var selectedTrainingDataSet = _trainingData.Take(TrainingSetSizeValue);
+                //    var resultsPerDigit = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>[10];
+                //    var averagesPerDigit = new (Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)[10];
+
+                //    // Run batch in parallel
+                //    Parallel.For(0, 10, digit =>
+                //    {
+                //        resultsPerDigit[digit] = new List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)>();
+
+                //        var collection = selectedTrainingDataSet.Where(stds => stds.ExpectedDigit == digit);
+
+                //        foreach (var d in collection)
+                //        {
+                //            resultsPerDigit[digit].Add(_neuralNetwork.Process(d.Input, d.ExpectedOutput));
+                //            Interlocked.Increment(ref runTrainingProgress);
+                //            progress.Report(runTrainingProgress);
+                //        }
+                //        averagesPerDigit[digit] = Average(resultsPerDigit[digit]);
+                //    });
+
+                //    results.AddRange(averagesPerDigit);
+                //}
+
+                //var result = Average(results);
+
+                //_neuralNetwork.UpdateNeuralNetwork(result.LinkWeightsHiddenOutput, result.LinkWeightsInputHidden);
             });
+        }
+
+        private (Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden) Average(List<(Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden)> matrixes)
+        {
+            Matrix linkWeightsHiddenOutputResult = new Matrix(matrixes[0].LinkWeightsHiddenOutput.RowCount, matrixes[0].LinkWeightsHiddenOutput.ColumnCount);
+            Matrix LinkWeightsInputHidden = new Matrix(matrixes[0].LinkWeightsInputHidden.RowCount, matrixes[0].LinkWeightsInputHidden.ColumnCount);
+
+            foreach (var result in matrixes)
+            {
+                linkWeightsHiddenOutputResult += result.LinkWeightsHiddenOutput;
+                LinkWeightsInputHidden += result.LinkWeightsInputHidden;
+            }
+
+            return (linkWeightsHiddenOutputResult / matrixes.Count, LinkWeightsInputHidden / matrixes.Count);
         }
 
         private async Task LoadTrainingSetCommandAsync()
         {
             TrainingSetCount = 0;
 
-            var expectedValues = LoadLabels("train-labels-idx1-ubyte.gz");
+            var expectedValues = LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
 
-            var images = await LoadImages("train-images-idx3-ubyte.gz", v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
+            var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
 
             _trainingData.Clear();
 
-            _trainingData = images.Zip(expectedValues, (i, ev) => (i, ExtensionMethods.CreateTargetOutput(ev).ToMatrix())).ToList();
+            _trainingData = images.Zip(expectedValues, (i, ev) => (i, ev, ExtensionMethods.CreateTargetOutput(ev).ToMatrix())).ToList();
         }
 
         private async Task LoadTestSetCommandAsync()
         {
             TestSetCount = 0;
 
-            var expectedValues = LoadLabels("t10k-labels-idx1-ubyte.gz");
+            var expectedValues = LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
 
-            var images = await LoadImages("t10k-images-idx3-ubyte.gz", v => LoadTestProgressBarMax = v, () => TestSetCount++);
+            var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
 
             _testData.Clear();
 
@@ -272,6 +302,13 @@ namespace NeuralNetworkUserInterface
 
         private IList<byte> LoadLabels(string fileName)
         {
+            if (!File.Exists(fileName))
+            {
+
+
+                return Enumerable.Empty<byte>().ToList();
+            }
+
             FileInfo fileToDecompress = new FileInfo(fileName);
 
             using (FileStream originalFileStream = fileToDecompress.OpenRead())

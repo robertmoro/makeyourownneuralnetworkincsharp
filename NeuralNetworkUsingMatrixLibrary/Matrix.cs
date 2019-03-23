@@ -20,10 +20,10 @@ namespace NeuralNetworkDomain
         }
 
         public static Matrix operator +(Matrix m1, Matrix m2) => m1.Apply(m2, (x, y) => x + y);
+
         public static Matrix operator -(Matrix m1, Matrix m2) => m1.Apply(m2, (x, y) => x - y);
         public static Matrix operator *(Matrix m1, Matrix m2) => m1.Apply(m2, (x, y) => x * y);
         public static Matrix operator *(float f, Matrix m) => f.Apply(m, (x, y) => x * y);
-        public static Matrix operator /(Matrix m, float f) => f.Apply(m, (x, y) => x / y);
 
         public List<float> Flatten() => _matrix.Cast<float>().ToList();
     }

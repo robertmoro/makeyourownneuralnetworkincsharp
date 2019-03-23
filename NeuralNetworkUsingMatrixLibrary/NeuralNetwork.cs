@@ -51,8 +51,6 @@ namespace NeuralNetworkDomain
         {
             var result = Process(inputs, targets);
 
-            UpdateNeuralNetwork(result.LinkWeightsHiddenOutput, result.LinkWeightsInputHidden);
-
             // Update the weights for the links between the hidden and output layers
             LinkWeightsHiddenOutput = result.LinkWeightsHiddenOutput;
             // Update the weights for the links between the input and hidden layers
@@ -88,12 +86,6 @@ namespace NeuralNetworkDomain
         {
             LinkWeightsHiddenOutput = linkWeightsHiddenOutputs.Average();
             LinkWeightsInputHidden = linkWeightsInputHiddens.Average();
-        }
-
-        public void UpdateNeuralNetwork(Matrix linkWeightsHiddenOutput, Matrix linkWeightsInputHidden)
-        {
-            LinkWeightsHiddenOutput = linkWeightsHiddenOutput;
-            LinkWeightsInputHidden = linkWeightsInputHidden;
         }
 
         /// <summary>

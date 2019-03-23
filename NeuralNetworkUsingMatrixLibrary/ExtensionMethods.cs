@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace NeuralNetworkDomain
 {
@@ -74,6 +75,7 @@ namespace NeuralNetworkDomain
 
             Matrix result = new Matrix(m1.RowCount, m1.ColumnCount);
 
+            //Parallel.For(0, m1.RowCount, rowIndex =>
             for (int rowIndex = 0; rowIndex < m1.RowCount; rowIndex++)
             {
                 for (int columnIndex = 0; columnIndex < m1.ColumnCount; columnIndex++)
@@ -88,11 +90,12 @@ namespace NeuralNetworkDomain
         {
             Matrix result = new Matrix(m.RowCount, m.ColumnCount);
 
+            //Parallel.For(0, m.RowCount, rowIndex =>
             for (int rowIndex = 0; rowIndex < m.RowCount; rowIndex++)
             {
                 for (int columnIndex = 0; columnIndex < m.ColumnCount; columnIndex++)
                 {
-                    result[rowIndex, columnIndex] = func(m[rowIndex, columnIndex], f);
+                    result[rowIndex, columnIndex] = func(f, m[rowIndex, columnIndex]);
                 }
             }
             return result;
