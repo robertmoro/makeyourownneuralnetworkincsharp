@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace NeuralNetworkDomain
 {
@@ -90,7 +89,6 @@ namespace NeuralNetworkDomain
         {
             Matrix result = new Matrix(m.RowCount, m.ColumnCount);
 
-            //Parallel.For(0, m.RowCount, rowIndex =>
             for (int rowIndex = 0; rowIndex < m.RowCount; rowIndex++)
             {
                 for (int columnIndex = 0; columnIndex < m.ColumnCount; columnIndex++)
@@ -177,14 +175,6 @@ namespace NeuralNetworkDomain
                 Array.Reverse(int32Value);
             }
             return BitConverter.ToInt32(int32Value, 0);
-        }
-
-        public static Matrix Average(this IEnumerable<Matrix> matrices)
-        {
-            var result = new Matrix(matrices.First().RowCount, matrices.First().ColumnCount);
-
-
-            return result;
         }
     }
 }

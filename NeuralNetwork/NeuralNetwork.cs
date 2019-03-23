@@ -14,11 +14,9 @@ namespace NeuralNetworkDomain
 
             LinkWeightsInputHidden = new Matrix(hiddenNodes, inputNodes);
             LinkWeightsInputHidden.Init(() => (float)_random.NextGaussian(1.0, 4.0));
-            //InitLinkWeights(_linkWeightsInputHidden, 1.0, 4.0);
 
             LinkWeightsHiddenOutput = new Matrix(outputNodes, hiddenNodes);
             LinkWeightsHiddenOutput.Init(() => (float)_random.NextGaussian(1.0, 4.0));
-            //InitLinkWeights(_linkWeightsHiddenOutput, 1.0, 4.0);
         }
 
         public Matrix LinkWeightsInputHidden { get; set; }
@@ -62,24 +60,24 @@ namespace NeuralNetworkDomain
         public (Matrix LinkWeightsHiddenOutput, Matrix LinkWeightsInputHidden) Process(Matrix inputs, Matrix targets)
         {
             // Calculate signals into hidden layer
-            var hidden_inputs = LinkWeightsInputHidden.Multiply(inputs);
+            var hiddenInputs = LinkWeightsInputHidden.Multiply(inputs);
             // Calculate the signals emerging from hidden layer
-            var hidden_outputs = hidden_inputs.ActivationFunction();
+            var hiddenOutputs = hiddenInputs.ActivationFunction();
 
             // Calculate signals into final output layer
-            var final_inputs = LinkWeightsHiddenOutput.Multiply(hidden_outputs);
+            var finalInputs = LinkWeightsHiddenOutput.Multiply(hiddenOutputs);
             // Calculate the signals emerging from final output layer
-            var final_outputs = final_inputs.ActivationFunction();
+            var finalOutputs = finalInputs.ActivationFunction();
 
             // Output layer error is the (target - actual)
-            var output_errors = targets - final_outputs;
+            var outputErrors = targets - finalOutputs;
             // Hidden layer error is the output_errors, split by weights, recombined at hidden nodes
-            var hidden_errors = LinkWeightsHiddenOutput.Transpose().Multiply(output_errors);
+            var hiddenErrors = LinkWeightsHiddenOutput.Transpose().Multiply(outputErrors);
 
             // Update the weights for the links between the hidden and output layers
-            var linkWeightsHiddenOutput = LinkWeightsHiddenOutput + _learningRate * (output_errors.Apply(final_outputs, (oe, fo) => { return oe * fo * (1.0f - fo); }).Multiply(hidden_outputs.Transpose()));
+            var linkWeightsHiddenOutput = LinkWeightsHiddenOutput + _learningRate * (outputErrors.Apply(finalOutputs, (oe, fo) => { return oe * fo * (1.0f - fo); }).Multiply(hiddenOutputs.Transpose()));
             // Update the weights for the links between the input and hidden layers
-            var linkWeightsInputHidden = LinkWeightsInputHidden + _learningRate * (hidden_errors.Apply(hidden_outputs, (he, ho) => { return he * ho * (1.0f - ho); }).Multiply(inputs.Transpose()));
+            var linkWeightsInputHidden = LinkWeightsInputHidden + _learningRate * (hiddenErrors.Apply(hiddenOutputs, (he, ho) => { return he * ho * (1.0f - ho); }).Multiply(inputs.Transpose()));
 
             return (linkWeightsHiddenOutput, linkWeightsInputHidden);
         }
@@ -102,29 +100,18 @@ namespace NeuralNetworkDomain
         public List<float> Query(Matrix input)
         {
             // Calculate signals into hidden layer
-            var hidden_inputs = LinkWeightsInputHidden.Multiply(input);
+            var hiddenInputs = LinkWeightsInputHidden.Multiply(input);
 
             // Calculate the signals emerging from hidden layer
-            var hidden_outputs = hidden_inputs.ActivationFunction();
+            var hiddenOutputs = hiddenInputs.ActivationFunction();
 
             // Calculate signals into final output layer
-            var final_inputs = LinkWeightsHiddenOutput.Multiply(hidden_outputs);
+            var finalInputs = LinkWeightsHiddenOutput.Multiply(hiddenOutputs);
 
             // Calculate the signals emerging from final output layer
-            var final_outputs = final_inputs.ActivationFunction();
+            var finalOutputs = finalInputs.ActivationFunction();
 
-            return final_outputs.Flatten();
-        }
-
-        private void InitLinkWeights(Matrix matrix, double mean, double stdDev)
-        {
-            for (int rowIndex = 0; rowIndex < matrix.RowCount; rowIndex++)
-            {
-                for (int columnIndex = 0; columnIndex < matrix.ColumnCount; columnIndex++)
-                {
-                    matrix[rowIndex, columnIndex] = (float)_random.NextGaussian(mean, stdDev);
-                }
-            }
+            return finalOutputs.Flatten();
         }
     }
 }

@@ -22,5 +22,17 @@ namespace NeuralNetworkUserInterface.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LocationOfMnistFiles {
+            get {
+                return ((string)(this["LocationOfMnistFiles"]));
+            }
+            set {
+                this["LocationOfMnistFiles"] = value;
+            }
+        }
     }
 }

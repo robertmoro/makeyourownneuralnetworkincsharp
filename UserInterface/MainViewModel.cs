@@ -58,6 +58,19 @@ namespace NeuralNetworkUserInterface
             RunTraining = ReactiveCommand.CreateFromTask(() => RunTrainingCommandAsync(runTrainingProgress), this.WhenAnyValue(x => x.TrainingSetSizeValue).Select(x => x > 0));
             LoadTestSet = ReactiveCommand.CreateFromTask(() => LoadTestSetCommandAsync());
             RunTest = ReactiveCommand.CreateFromTask(() => RunTestCommandAsync(runTestProgress), this.WhenAnyValue(x => x.TestSetSizeValue).Select(x => x > 0));
+            StoreSettingsCommand = ReactiveCommand.Create(StoreSettings);
+
+            LocationOfMnistFiles = Properties.Settings.Default.LocationOfMnistFiles;
+
+            this.WhenAnyValue(x => x.LocationOfMnistFiles)
+                .Select(x => Unit.Default)
+                .InvokeCommand(this, x => x.StoreSettingsCommand);
+        }
+
+        private void StoreSettings()
+        {
+            Properties.Settings.Default.LocationOfMnistFiles = LocationOfMnistFiles;
+            Properties.Settings.Default.Save();
         }
 
         public ReactiveCommand<Unit, Unit> BrowseMnistDatabaseFolderCommand { get; }
@@ -68,6 +81,7 @@ namespace NeuralNetworkUserInterface
         public ReactiveCommand<Unit, Unit> LoadTestSet { get; }
         public ReactiveCommand<Unit, Unit> RunTest { get; }
         public ReactiveCommand<Unit, Unit> CancelTest { get; }
+        public ReactiveCommand<Unit, Unit> StoreSettingsCommand { get; }
 
         public string LocationOfMnistFiles
         {
