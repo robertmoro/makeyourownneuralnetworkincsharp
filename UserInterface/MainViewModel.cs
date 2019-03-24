@@ -5,7 +5,6 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -65,7 +64,6 @@ namespace NeuralNetworkUserInterface
 
             BrowseMnistDatabaseFolderCommand = ReactiveCommand.Create(BrowseMnistDatabaseFolder);
             LoadTrainingSet = ReactiveCommand.CreateFromTask(() => LoadTrainingSetCommandAsync());
-            StopLoadTrainingSet = ReactiveCommand.Create(StopLoadTrainingSetCommand);
             RunTraining = ReactiveCommand.CreateFromTask(() => RunTrainingCommandAsync(runTrainingProgress), this.WhenAnyValue(x => x.TrainingSetSizeValue).Select(x => x > 0));
             LoadTestSet = ReactiveCommand.CreateFromTask(() => LoadTestSetCommandAsync());
             RunTest = ReactiveCommand.CreateFromTask(() => RunTestCommandAsync(runTestProgress), this.WhenAnyValue(x => x.TestSetSizeValue).Select(x => x > 0));
@@ -88,12 +86,12 @@ namespace NeuralNetworkUserInterface
         public ReactiveCommand<Unit, Unit> CancelTest { get; }
         public ReactiveCommand<Unit, Unit> StoreSettingsCommand { get; }
 
+        #region Properties
         public string LocationOfMnistFiles
         {
             get => _locationOfMnistFiles;
             set => this.RaiseAndSetIfChanged(ref _locationOfMnistFiles, value);
         }
-
         public int TrainingSetCount
         {
             get => _trainingSetCount;
@@ -159,6 +157,7 @@ namespace NeuralNetworkUserInterface
             get => _accuracy;
             set => this.RaiseAndSetIfChanged(ref _accuracy, value);
         }
+        #endregion Properties
 
         private void BrowseMnistDatabaseFolder()
         {
@@ -169,30 +168,6 @@ namespace NeuralNetworkUserInterface
             {
                 LocationOfMnistFiles = folderDialog.SelectedPath;
             }
-        }
-
-        private void StopLoadTrainingSetCommand()
-        {
-            _cancellationTokenSource.Cancel();
-        }
-
-        // Train neural network
-        private async Task RunTrainingCommandAsync(IProgress<int> progress)
-        {
-            await Task.Run(() =>
-            {
-                int runTrainingProgress = 0;
-
-                foreach (var epoch in Enumerable.Range(0, EpochValue))
-                {
-                    foreach (var d in _trainingData.Take(TrainingSetSizeValue))
-                    {
-                        _neuralNetwork.Train(d.Input, d.ExpectedOutput);
-
-                        progress.Report(++runTrainingProgress);
-                    }
-                }
-            });
         }
 
         private async Task LoadTrainingSetCommandAsync()
@@ -219,6 +194,25 @@ namespace NeuralNetworkUserInterface
             _testData.Clear();
 
             _testData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev)).ToList();
+        }
+
+        // Train neural network
+        private async Task RunTrainingCommandAsync(IProgress<int> progress)
+        {
+            await Task.Run(() =>
+            {
+                int runTrainingProgress = 0;
+
+                foreach (var epoch in Enumerable.Range(0, EpochValue))
+                {
+                    foreach (var d in _trainingData.Take(TrainingSetSizeValue))
+                    {
+                        _neuralNetwork.Train(d.Input, d.ExpectedOutput);
+
+                        progress.Report(++runTrainingProgress);
+                    }
+                }
+            });
         }
 
         // Query neural network

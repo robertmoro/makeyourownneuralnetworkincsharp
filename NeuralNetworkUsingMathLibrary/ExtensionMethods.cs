@@ -1,7 +1,6 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 namespace NeuralNetworkUsingMathLibrary
@@ -13,47 +12,17 @@ namespace NeuralNetworkUsingMathLibrary
             return Vector<float>.Build.DenseOfEnumerable(data);
         }
 
-        public static Matrix<float> ToMatrix(this IEnumerable<float> data)
-        {
-            IReadOnlyList<float> list = data.ToList();
-            var matrix = Matrix<float>.Build.Dense(list.Count, 1);
-            for (int rowIndex = 0; rowIndex < matrix.RowCount; rowIndex++)
-            {
-                matrix[rowIndex, 0] = list[rowIndex];
-            }
-            return matrix;
-        }
-
         public static Matrix<float> ActivationFunction(this Matrix<float> matrix)
         {
-            float Sigmoid(float value) => 1.0f / (1.0f + (float)Math.Exp(-value));
-
-            Matrix<float> result = Matrix<float>.Build.Dense(matrix.RowCount, matrix.ColumnCount);
-
-            for (int heightIndex = 0; heightIndex < matrix.RowCount; heightIndex++)
-            {
-                for (int widthIndex = 0; widthIndex < matrix.ColumnCount; widthIndex++)
-                {
-                    result[heightIndex, widthIndex] = Sigmoid(matrix[heightIndex, widthIndex]);
-                }
-            }
-
-            return result;
+            return matrix.Map(v => Sigmoid(v));
         }
 
         public static Vector<float> ActivationFunction(this Vector<float> vector)
         {
-            float Sigmoid(float value) => 1.0f / (1.0f + (float)Math.Exp(-value));
-
-            Vector<float> result = Vector<float>.Build.Dense(vector.Count);
-
-            for (int heightIndex = 0; heightIndex < vector.Count; heightIndex++)
-            {
-                result[heightIndex] = Sigmoid(vector[heightIndex]);
-            }
-
-            return result;
+            return vector.Map(v => Sigmoid(v));
         }
+
+        private static float Sigmoid(float value) => 1.0f / (1.0f + (float)Math.Exp(-value));
 
         public static List<float> CreateTargetOutput(int digit)
         {
