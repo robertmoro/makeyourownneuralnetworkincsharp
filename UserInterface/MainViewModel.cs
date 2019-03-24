@@ -37,7 +37,7 @@ namespace NeuralNetworkUserInterface
         private float _accuracy;
         private readonly IMnistReader _mnistReader;
 
-        public MainViewModel()
+        public MainViewModel(IMnistReader mnistReader)
         {
             LearningRateValue = 0.1f;
             LoadTrainingProgressBarMax = 1; // Avoid full progress bar after start
@@ -201,11 +201,11 @@ namespace NeuralNetworkUserInterface
 
             var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
 
-            var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
+            var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
 
             _trainingData.Clear();
 
-            _trainingData = images.Zip(expectedValues, (image, ev) => (image, ev, ExtensionMethods.CreateTargetOutput(ev).ToVector())).ToList();
+            _trainingData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev, ExtensionMethods.CreateTargetOutput(ev).ToVector())).ToList();
         }
 
         private async Task LoadTestSetCommandAsync()
@@ -214,37 +214,11 @@ namespace NeuralNetworkUserInterface
 
             var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
 
-            var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
+            var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
 
             _testData.Clear();
 
-            _testData = images.Zip(expectedValues, (image, ev) => (image, ev)).ToList();
-        }
-
-        private async Task<IEnumerable<Vector<float>>> LoadImages(string fileName, Action<long> setProgressBarMax, Action incrementCounter)
-        {
-            var images = new List<Vector<float>>();
-            FileInfo fileToDecompress = new FileInfo(fileName);
-
-            using (FileStream originalFileStream = fileToDecompress.OpenRead())
-            using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
-            {
-                byte[] buffer = new byte[28 * 28];
-
-                // Read file header
-                await ReadBytes(decompressionStream, buffer, 16);
-                // Read number of images from header
-                setProgressBarMax(buffer.ReadBigEndianInt32(4));
-
-                // Read all the images
-                while (await ReadBytes(decompressionStream, buffer, buffer.Length))
-                {
-                    images.Add(ExtensionMethods.Transform(buffer).ToVector());
-                    incrementCounter();
-                }
-            }
-
-            return images;
+            _testData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev)).ToList();
         }
 
         // Query neural network
@@ -270,24 +244,6 @@ namespace NeuralNetworkUserInterface
             Result result = new Result();
             results.ToList().ForEach(result.Increment);
             Accuracy = result.Accuracy;
-        }
-
-        private async Task<bool> ReadBytes(Stream decompressionStream, byte[] buffer, int count)
-        {
-            int offset = 0;
-            int bytesRead = 0;
-            while ((bytesRead = await decompressionStream.ReadAsync(buffer, offset, count - offset)) > 0)
-            {
-                if (bytesRead + offset < count)
-                {
-                    offset += bytesRead;
-                }
-                else
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private class Result

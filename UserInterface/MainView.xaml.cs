@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using MnistDatabase;
+using ReactiveUI;
 using System.Reactive.Disposables;
 
 namespace NeuralNetworkUserInterface
@@ -12,7 +13,7 @@ namespace NeuralNetworkUserInterface
         {
             InitializeComponent();
 
-            ViewModel = new MainViewModel();
+            ViewModel = new MainViewModel(new MnistReader());
 
             this.WhenActivated(disposableRegistration =>
             {

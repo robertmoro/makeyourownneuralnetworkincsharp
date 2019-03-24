@@ -54,7 +54,8 @@ namespace MnistDatabase
                 // Read all the images
                 while (await ReadBytes(decompressionStream, buffer, buffer.Length))
                 {
-                    images.Add(buffer);
+                    // Note: ToArray creates a copy of the buffer
+                    images.Add(buffer.ToArray());
                     incrementProgress();
                 }
             }
