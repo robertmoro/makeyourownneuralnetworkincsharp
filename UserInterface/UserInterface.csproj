@@ -128,6 +128,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MnistDatabase\MnistDatabase.csproj">
+      <Project>{2F30DD5E-CB28-41C4-B331-CD9A8D78EE76}</Project>
+      <Name>MnistDatabase</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NeuralNetworkUsingMathLibrary\NeuralNetworkUsingMathLibrary.csproj">
       <Project>{12ADB99A-0385-4605-8880-E4EA884B0427}</Project>
       <Name>NeuralNetworkUsingMathLibrary</Name>

@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using MnistDatabase;
 using NeuralNetworkUsingMathLibrary;
 using ReactiveUI;
 using System;
@@ -18,8 +19,8 @@ namespace NeuralNetworkUserInterface
     {
         private readonly NeuralNetwork _neuralNetwork;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private List<(Matrix<float> Input, byte ExpectedDigit, Matrix<float> ExpectedOutput)> _trainingData = new List<(Matrix<float> Input, byte ExpectedDigit, Matrix<float> ExpectedOutput)>();
-        private List<(Matrix<float> Input, byte ExpectedOutput)> _testData = new List<(Matrix<float> Input, byte ExpectedOutput)>();
+        private List<(Vector<float> Input, byte ExpectedDigit, Vector<float> ExpectedOutput)> _trainingData = new List<(Vector<float> Input, byte ExpectedDigit, Vector<float> ExpectedOutput)>();
+        private List<(Vector<float> Input, byte ExpectedOutput)> _testData = new List<(Vector<float> Input, byte ExpectedOutput)>();
         private string _locationOfMnistFiles;
         private int _trainingSetSizeValue;
         private float _learingRateValue;
@@ -34,6 +35,7 @@ namespace NeuralNetworkUserInterface
         private int _testSetSize;
         private int _runTestProgress;
         private float _accuracy;
+        private readonly IMnistReader _mnistReader;
 
         public MainViewModel()
         {
@@ -42,6 +44,8 @@ namespace NeuralNetworkUserInterface
             RunTrainingProgress = 0;
             RunTrainingCount = 1;
             LoadTestProgressBarMax = 1;     // Avoid full progress bar after start
+
+            _mnistReader = new MnistReader();
 
             Progress<int> runTrainingProgress = new Progress<int>(i => RunTrainingProgress = i);
             Progress<int> runTestProgress = new Progress<int>(i => RunTestProgress = i);
@@ -195,31 +199,31 @@ namespace NeuralNetworkUserInterface
         {
             TrainingSetCount = 0;
 
-            var expectedValues = LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
+            var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
 
             var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
 
             _trainingData.Clear();
 
-            _trainingData = images.Zip(expectedValues, (i, ev) => (i, ev, ExtensionMethods.CreateTargetOutput(ev).ToMatrix())).ToList();
+            _trainingData = images.Zip(expectedValues, (image, ev) => (image, ev, ExtensionMethods.CreateTargetOutput(ev).ToVector())).ToList();
         }
 
         private async Task LoadTestSetCommandAsync()
         {
             TestSetCount = 0;
 
-            var expectedValues = LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
+            var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
 
             var images = await LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
 
             _testData.Clear();
 
-            _testData = images.Zip(expectedValues, (i, ev) => (i, ev)).ToList();
+            _testData = images.Zip(expectedValues, (image, ev) => (image, ev)).ToList();
         }
 
-        private async Task<IEnumerable<Matrix<float>>> LoadImages(string fileName, Action<long> setProgressBarMax, Action incrementCounter)
+        private async Task<IEnumerable<Vector<float>>> LoadImages(string fileName, Action<long> setProgressBarMax, Action incrementCounter)
         {
-            List<Matrix<float>> images = new List<Matrix<float>>();
+            var images = new List<Vector<float>>();
             FileInfo fileToDecompress = new FileInfo(fileName);
 
             using (FileStream originalFileStream = fileToDecompress.OpenRead())
@@ -235,7 +239,7 @@ namespace NeuralNetworkUserInterface
                 // Read all the images
                 while (await ReadBytes(decompressionStream, buffer, buffer.Length))
                 {
-                    images.Add(ExtensionMethods.Transform(buffer).ToMatrix());
+                    images.Add(ExtensionMethods.Transform(buffer).ToVector());
                     incrementCounter();
                 }
             }
@@ -266,26 +270,6 @@ namespace NeuralNetworkUserInterface
             Result result = new Result();
             results.ToList().ForEach(result.Increment);
             Accuracy = result.Accuracy;
-        }
-
-        private IList<byte> LoadLabels(string fileName)
-        {
-            if (!File.Exists(fileName))
-            {
-
-
-                return Enumerable.Empty<byte>().ToList();
-            }
-
-            FileInfo fileToDecompress = new FileInfo(fileName);
-
-            using (FileStream originalFileStream = fileToDecompress.OpenRead())
-            using (GZipStream decompressionStream = new GZipStream(originalFileStream, CompressionMode.Decompress))
-            using (var resultStream = new MemoryStream())
-            {
-                decompressionStream.CopyTo(resultStream);
-                return resultStream.ToArray().Skip(8).ToList();
-            }
         }
 
         private async Task<bool> ReadBytes(Stream decompressionStream, byte[] buffer, int count)

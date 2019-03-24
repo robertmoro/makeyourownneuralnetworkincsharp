@@ -8,6 +8,11 @@ namespace NeuralNetworkUsingMathLibrary
 {
     public static class ExtensionMethods
     {
+        public static Vector<float> ToVector(this IEnumerable<float> data)
+        {
+            return Vector<float>.Build.DenseOfEnumerable(data);
+        }
+
         public static Matrix<float> ToMatrix(this IEnumerable<float> data)
         {
             IReadOnlyList<float> list = data.ToList();
@@ -36,20 +41,17 @@ namespace NeuralNetworkUsingMathLibrary
             return result;
         }
 
-        public static Matrix<float> Apply(this Matrix<float> m1, Matrix<float> m2, Func<float, float, float> func)
+        public static Vector<float> ActivationFunction(this Vector<float> vector)
         {
-            Debug.Assert(m1.RowCount == m2.RowCount);
-            Debug.Assert(m1.ColumnCount == m2.ColumnCount);
+            float Sigmoid(float value) => 1.0f / (1.0f + (float)Math.Exp(-value));
 
-            Matrix<float> result = Matrix<float>.Build.Dense(m1.RowCount, m1.ColumnCount);
+            Vector<float> result = Vector<float>.Build.Dense(vector.Count);
 
-            for (int rowIndex = 0; rowIndex < m1.RowCount; rowIndex++)
+            for (int heightIndex = 0; heightIndex < vector.Count; heightIndex++)
             {
-                for (int columnIndex = 0; columnIndex < m1.ColumnCount; columnIndex++)
-                {
-                    result[rowIndex, columnIndex] = func(m1[rowIndex, columnIndex], m2[rowIndex, columnIndex]);
-                }
+                result[heightIndex] = Sigmoid(vector[heightIndex]);
             }
+
             return result;
         }
 
@@ -79,17 +81,6 @@ namespace NeuralNetworkUsingMathLibrary
             int i = 0;
             var dic = results.ToDictionary(r => i++, r => r);
             return dic.OrderByDescending(r => r.Value).First().Key;
-        }
-
-        public static int ReadBigEndianInt32(this byte[] buffer, int offset)
-        {
-            var int32Value = new byte[4];
-            Array.Copy(buffer, offset, int32Value, 0, 4);
-            if (BitConverter.IsLittleEndian)
-            {
-                Array.Reverse(int32Value);
-            }
-            return BitConverter.ToInt32(int32Value, 0);
         }
     }
 }

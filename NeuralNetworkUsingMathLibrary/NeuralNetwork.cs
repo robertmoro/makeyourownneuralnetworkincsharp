@@ -13,13 +13,17 @@ namespace NeuralNetworkUsingMathLibrary
         public NeuralNetwork(int inputNodes, int hiddenNodes, int outputNodes, float learningRate)
         {
             _learningRate = learningRate;
-            MathNet.Numerics.Distributions.IContinuousDistribution distribution = new MathNet.Numerics.Distributions.Normal(0d, Math.Pow(inputNodes, -0.5));
-            _linkWeightsInputHidden = Matrix<float>.Build.Random(hiddenNodes, inputNodes, distribution);
-            _linkWeightsHiddenOutput = Matrix<float>.Build.Random(outputNodes, hiddenNodes, distribution);
+            MathNet.Numerics.Distributions.IContinuousDistribution normalDistribution = new MathNet.Numerics.Distributions.Normal(0d, Math.Pow(inputNodes, -0.5));
+            _linkWeightsInputHidden = Matrix<float>.Build.Random(hiddenNodes, inputNodes, normalDistribution);
+            _linkWeightsHiddenOutput = Matrix<float>.Build.Random(outputNodes, hiddenNodes, normalDistribution);
         }
 
-        public void Train(Matrix<float> inputs, Matrix<float> targets)
+        public void Train(Vector<float> inputsList, Vector<float> targetsList)
         {
+            // convert inputs list to 2d array
+            Matrix<float> inputs = Matrix<float>.Build.Dense(inputsList.Count, 1, inputsList.ToArray());
+            Matrix<float> targets = Matrix<float>.Build.Dense(targetsList.Count, 1, targetsList.ToArray());
+
             // Calculate signals into hidden layer
             var hidden_inputs = _linkWeightsInputHidden.Multiply(inputs);
             // Calculate the signals emerging from hidden layer
@@ -36,15 +40,15 @@ namespace NeuralNetworkUsingMathLibrary
             var hidden_errors = _linkWeightsHiddenOutput.Transpose().Multiply(output_errors);
 
             // Update the weights for the links between the hidden and output layers
-            _linkWeightsHiddenOutput = _linkWeightsHiddenOutput + _learningRate * (output_errors.Apply(final_outputs, (oe, fo) => { return oe * fo * (1.0f - fo); }).Multiply(hidden_outputs.Transpose()));
+            _linkWeightsHiddenOutput += _learningRate * output_errors.PointwiseMultiply(final_outputs).PointwiseMultiply(1.0f - final_outputs).TransposeAndMultiply(hidden_outputs);
             // Update the weights for the links between the input and hidden layers
-            _linkWeightsInputHidden = _linkWeightsInputHidden + _learningRate * (hidden_errors.Apply(hidden_outputs, (he, ho) => { return he * ho * (1.0f - ho); }).Multiply(inputs.Transpose()));
+            _linkWeightsInputHidden += _learningRate * hidden_errors.PointwiseMultiply(hidden_outputs).PointwiseMultiply(1.0f - hidden_outputs).TransposeAndMultiply(inputs);
         }
 
         /// <summary>
         /// Query the neural network
         /// </summary>
-        public float[] Query(Matrix<float> input)
+        public float[] Query(Vector<float> input)
         {
             // Calculate signals into hidden layer
             var hidden_inputs = _linkWeightsInputHidden.Multiply(input);
@@ -58,7 +62,7 @@ namespace NeuralNetworkUsingMathLibrary
             // Calculate the signals emerging from final output layer
             var final_outputs = final_inputs.ActivationFunction();
 
-            return final_outputs.ToRowMajorArray();
+            return final_outputs.ToArray();
         }
     }
 }
