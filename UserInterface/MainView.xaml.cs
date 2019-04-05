@@ -1,6 +1,8 @@
 ﻿using MnistDatabase;
 using ReactiveUI;
+using System.Reactive;
 using System.Reactive.Disposables;
+using System.Windows.Forms;
 
 namespace NeuralNetworkUserInterface
 {
@@ -51,12 +53,6 @@ namespace NeuralNetworkUserInterface
                     view => view.TrainingSetCount.Text)
                     .DisposeWith(disposableRegistration);
 
-                // Stop load button
-                this.BindCommand(ViewModel,
-                    viewModel => viewModel.StopLoadTrainingSet,
-                    view => view.StopLoadTrainingSet)
-                    .DisposeWith(disposableRegistration);
-
                 // Training set size selection using slider
                 this.Bind(ViewModel,
                     viewModel => viewModel.TrainingSetSizeValue,
@@ -96,18 +92,6 @@ namespace NeuralNetworkUserInterface
                 this.OneWayBind(ViewModel,
                     viewModel => viewModel.EpochValue,
                     view => view.EpochValue.Text)
-                    .DisposeWith(disposableRegistration);
-
-                // Minibatch slider position
-                this.Bind(ViewModel,
-                    viewModel => viewModel.MinibatchValue,
-                    view => view.MinibatchSlider.Value)
-                    .DisposeWith(disposableRegistration);
-
-                // Minibatch slider value as text
-                this.OneWayBind(ViewModel,
-                    viewModel => viewModel.MinibatchValue,
-                    view => view.MinibatchValue.Text)
                     .DisposeWith(disposableRegistration);
 
                 // Run training command
@@ -210,8 +194,42 @@ namespace NeuralNetworkUserInterface
                     viewModel => viewModel.TestSetSizeValue,
                     view => view.RunTestCount.Text)
                     .DisposeWith(disposableRegistration);
+
+                // Interaction - error messages
+                this.ViewModel
+                    .ErrorMessage
+                    .RegisterHandler(
+                        context =>
+                        {
+                            // WPF message box
+                            System.Windows.MessageBox.Show(context.Input.Message, "Error");
+                            context.SetOutput(Unit.Default);
+                        })
+                    .DisposeWith(disposableRegistration);
+
+                // Interaction - browse directory
+                this.ViewModel
+                    .BrowseDirectory
+                    .RegisterHandler(
+                        context =>
+                        {
+                            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
+                            folderDialog.SelectedPath = context.Input;
+
+                            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                            {
+                                context.SetOutput((true, folderDialog.SelectedPath));
+                            }
+                            else
+                            {
+                                context.SetOutput((false, ""));
+                            }
+
+                        })
+                    .DisposeWith(disposableRegistration);
             });
         }
+
         private string ViewModelToViewConverterFunc(float value)
         {
             return value.ToString("F");

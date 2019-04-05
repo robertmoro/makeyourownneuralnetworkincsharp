@@ -20,8 +20,6 @@ namespace MnistDatabase
         {
             if (!File.Exists(fileName))
             {
-
-
                 return Enumerable.Empty<byte>().ToList();
             }
 

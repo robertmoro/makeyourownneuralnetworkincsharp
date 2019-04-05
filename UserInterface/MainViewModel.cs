@@ -10,14 +10,15 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace NeuralNetworkUserInterface
 {
     public class MainViewModel : ReactiveObject
     {
+        private readonly Interaction<Exception, Unit> _errorMessage;
+        private readonly Interaction<string, (bool, string)> _browseDirectory;
         private readonly NeuralNetwork _neuralNetwork;
-        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private readonly IMnistReader _mnistReader;
         private List<(Vector<float> Input, byte ExpectedDigit, Vector<float> ExpectedOutput)> _trainingData = new List<(Vector<float> Input, byte ExpectedDigit, Vector<float> ExpectedOutput)>();
         private List<(Vector<float> Input, byte ExpectedOutput)> _testData = new List<(Vector<float> Input, byte ExpectedOutput)>();
         private string _locationOfMnistFiles;
@@ -34,7 +35,6 @@ namespace NeuralNetworkUserInterface
         private int _testSetSize;
         private int _runTestProgress;
         private float _accuracy;
-        private readonly IMnistReader _mnistReader;
 
         public MainViewModel(IMnistReader mnistReader)
         {
@@ -43,6 +43,9 @@ namespace NeuralNetworkUserInterface
             RunTrainingProgress = 0;
             RunTrainingCount = 1;
             LoadTestProgressBarMax = 1;     // Avoid full progress bar after start
+
+            _errorMessage = new Interaction<Exception, Unit>();
+            _browseDirectory = new Interaction<string, (bool, string)>();
 
             _mnistReader = new MnistReader();
 
@@ -62,7 +65,14 @@ namespace NeuralNetworkUserInterface
                 .Select(x => Unit.Default)
                 .InvokeCommand(this, x => x.StoreSettingsCommand);
 
-            BrowseMnistDatabaseFolderCommand = ReactiveCommand.Create(BrowseMnistDatabaseFolder);
+            BrowseMnistDatabaseFolderCommand = ReactiveCommand.CreateFromObservable(
+                () => 
+                    this
+                        .BrowseDirectory
+                        .Handle(LocationOfMnistFiles)
+                        .Where(result => result.Success)
+                        .Do(result => LocationOfMnistFiles = result.Directory)
+                );
             LoadTrainingSet = ReactiveCommand.CreateFromTask(() => LoadTrainingSetCommandAsync());
             RunTraining = ReactiveCommand.CreateFromTask(() => RunTrainingCommandAsync(runTrainingProgress), this.WhenAnyValue(x => x.TrainingSetSizeValue).Select(x => x > 0));
             LoadTestSet = ReactiveCommand.CreateFromTask(() => LoadTestSetCommandAsync());
@@ -70,15 +80,10 @@ namespace NeuralNetworkUserInterface
             StoreSettingsCommand = ReactiveCommand.Create(StoreSettings);
         }
 
-        private void StoreSettings()
-        {
-            Properties.Settings.Default.LocationOfMnistFiles = LocationOfMnistFiles;
-            Properties.Settings.Default.Save();
-        }
-
-        public ReactiveCommand<Unit, Unit> BrowseMnistDatabaseFolderCommand { get; }
+        public Interaction<Exception, Unit> ErrorMessage => _errorMessage;
+        public Interaction<string, (bool Success, string Directory)> BrowseDirectory => _browseDirectory;
+        public ReactiveCommand<Unit, (bool, string)> BrowseMnistDatabaseFolderCommand { get; }
         public ReactiveCommand<Unit, Unit> LoadTrainingSet { get; }
-        public ReactiveCommand<Unit, Unit> StopLoadTrainingSet { get; }
         public ReactiveCommand<Unit, Unit> RunTraining { get; }
         public ReactiveCommand<Unit, Unit> CancelTraining { get; }
         public ReactiveCommand<Unit, Unit> LoadTestSet { get; }
@@ -159,41 +164,50 @@ namespace NeuralNetworkUserInterface
         }
         #endregion Properties
 
-        private void BrowseMnistDatabaseFolder()
+        private void StoreSettings()
         {
-            FolderBrowserDialog folderDialog = new FolderBrowserDialog();
-            folderDialog.SelectedPath = "C:\\";
-
-            if (folderDialog.ShowDialog() == DialogResult.OK)
-            {
-                LocationOfMnistFiles = folderDialog.SelectedPath;
-            }
+            Properties.Settings.Default.LocationOfMnistFiles = LocationOfMnistFiles;
+            Properties.Settings.Default.Save();
         }
 
         private async Task LoadTrainingSetCommandAsync()
         {
-            TrainingSetCount = 0;
+            try
+            {
+                TrainingSetCount = 0;
 
-            var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
+                var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "train-labels-idx1-ubyte.gz"));
 
-            var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
+                var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "train-images-idx3-ubyte.gz"), v => LoadTrainingProgressBarMax = v, () => TrainingSetCount++);
 
-            _trainingData.Clear();
+                _trainingData.Clear();
 
-            _trainingData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev, ExtensionMethods.CreateTargetOutput(ev).ToVector())).ToList();
+                _trainingData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev, ExtensionMethods.CreateTargetOutput(ev).ToVector())).ToList();
+            }
+            catch (Exception exception)
+            {
+                await ErrorMessage.Handle(exception);
+            }
         }
 
         private async Task LoadTestSetCommandAsync()
         {
-            TestSetCount = 0;
+            try
+            {
+                TestSetCount = 0;
 
-            var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
+                var expectedValues = _mnistReader.LoadLabels(Path.Combine(LocationOfMnistFiles, "t10k-labels-idx1-ubyte.gz"));
 
-            var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
+                var images = await _mnistReader.LoadImages(Path.Combine(LocationOfMnistFiles, "t10k-images-idx3-ubyte.gz"), v => LoadTestProgressBarMax = v, () => TestSetCount++);
 
-            _testData.Clear();
+                _testData.Clear();
 
-            _testData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev)).ToList();
+                _testData = images.Zip(expectedValues, (image, ev) => (ExtensionMethods.Transform(image).ToVector(), ev)).ToList();
+            }
+            catch (Exception exception)
+            {
+                await ErrorMessage.Handle(exception);
+            }
         }
 
         // Train neural network

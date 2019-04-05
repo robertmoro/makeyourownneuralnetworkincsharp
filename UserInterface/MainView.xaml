@@ -8,7 +8,7 @@
     xmlns:reactiveui="http://reactiveui.net"
     xmlns:viewModel="clr-namespace:NeuralNetworkUserInterface"
     x:TypeArguments="viewModel:MainViewModel"
-    Title="Create you own neural network in C#" Height="508.787" Width="800">
+    Title="Create you own neural network in C#" Height="488.436" Width="800">
     <StackPanel Orientation="Vertical">
 
         <Grid Margin="20">
@@ -23,18 +23,18 @@
             </Grid.RowDefinitions>
 
             <Label Grid.Row="0" Grid.Column="0" Content="Location of MNIST gz files" Margin="3"/>
-            <TextBox Grid.Row="0" Grid.Column="1" x:Name="LocationOfMnistFiles" IsEnabled="True" HorizontalAlignment="Stretch" Margin="3"/>
+            <TextBox Grid.Row="0" Grid.Column="1" x:Name="LocationOfMnistFiles" IsReadOnly="True" HorizontalAlignment="Stretch" Margin="3"/>
             <Button Grid.Row="0" Grid.Column="2" x:Name="BrowseMnistDatabaseFolder" Content="Browse..." VerticalAlignment="Center" Width="75" HorizontalAlignment="Left" Margin="3"/>
         </Grid>
 
         <GroupBox Header="Training set" Margin="10" Padding="10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="75"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="50"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="50"/>
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
@@ -43,48 +43,38 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!--Load training set-->
-                <Button Grid.Row="0" Grid.Column="0" x:Name="LoadTrainingSet" Content="Load" VerticalAlignment="Center" Width="75" HorizontalAlignment="Left" Margin="3"/>
+                <Button Grid.Row="0" Grid.Column="0" x:Name="LoadTrainingSet" Content="Load" VerticalAlignment="Center" HorizontalAlignment="Left" Width="75" Margin="3"/>
                 <ProgressBar Grid.Row="0" Grid.Column="3" x:Name="LoadTrainingSetProgressBar" Height="10" VerticalAlignment="Center"/>
-                <Button Grid.Row="0" Grid.Column="4" x:Name="StopLoadTrainingSet" Content="Stop" VerticalAlignment="Center" Width="75" HorizontalAlignment="Left" Margin="3"/>
 
                 <!--Training set size-->
-                <Label Grid.Row="1" Grid.Column="0" Content="Training set size" Margin="3"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="Training set size" HorizontalAlignment="Left" Margin="3"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TrainingSetSizeValue" Text="TextBlock" VerticalAlignment="Center" Margin="3"/>
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="0" VerticalAlignment="Center" Margin="3"/>
                 <Slider Grid.Row="1" Grid.Column="3" x:Name="LoadTrainingSetSlider" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="1" Grid.Column="4" x:Name="TrainingSetCount" Text="max" VerticalAlignment="Center" Margin="3"/>
 
                 <!--Learning rate-->
-                <Label Grid.Row="2" Grid.Column="0" Content="Learning rate" VerticalAlignment="Center" Margin="3"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="Learning rate" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="3"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" x:Name="LearningRateValue" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="2" Grid.Column="2" Text="0" VerticalAlignment="Center" Margin="3"/>
                 <Slider Grid.Row="2" Grid.Column="3" x:Name="LearningRateSlider" Minimum="0.01" Maximum="1.0" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="2" Grid.Column="4" Text="1" VerticalAlignment="Center" Margin="3"/>
 
                 <!--Epoch-->
-                <Label Grid.Row="3" Grid.Column="0" Content="Epoch" VerticalAlignment="Center"/>
+                <Label Grid.Row="3" Grid.Column="0" Content="Epoch" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <TextBlock Grid.Row="3" Grid.Column="1" x:Name="EpochValue" VerticalAlignment="Center" Margin="3"/>
                 <TextBlock Grid.Row="3" Grid.Column="2" Text="1" VerticalAlignment="Center" Margin="3"/>
                 <Slider Grid.Row="3" Grid.Column="3" x:Name="EpochSlider" TickPlacement="Both" Ticks="1,2,3,4,5,6,7,8,9" IsSnapToTickEnabled="True" TickFrequency="10" Minimum="1" Maximum="10" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="3" Grid.Column="4" Text="10" VerticalAlignment="Center" Margin="3"/>
 
-                <!--Minibatch size-->
-                <Label Grid.Row="4" Grid.Column="0" Content="Minibatch size" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="MinibatchValue" VerticalAlignment="Center" Margin="3"/>
-                <TextBlock Grid.Row="4" Grid.Column="2" Text="1" VerticalAlignment="Center" Margin="3"/>
-                <Slider Grid.Row="4" Grid.Column="3" x:Name="MinibatchSlider" TickPlacement="Both" Ticks="10,20,30,40,50,60,70,80,90" TickFrequency="10" Minimum="1" Maximum="100" VerticalAlignment="Center"/>
-                <TextBlock Grid.Row="4" Grid.Column="4" Text="100" VerticalAlignment="Center" Margin="3"/>
-
                 <!--Run training set-->
-                <Button x:Name="RunTraining" Grid.Row="5" Grid.Column="0" Content="Run" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Margin="3"/>
-                <TextBlock x:Name="RunTrainingValue" Grid.Row="5" Grid.Column="1" VerticalAlignment="Center" Margin="3,5,0,5" HorizontalAlignment="Left" Width="69"/>
-                <ProgressBar x:Name="RunTrainingProgressBar" Grid.Row="5" Grid.Column="3" Height="10" VerticalAlignment="Center" Minimum="0"/>
-                <TextBlock x:Name="RunTrainingCount" Grid.Row="5" Grid.Column="4" Text="10" VerticalAlignment="Center" Margin="3"/>
-                <!--<Button x:Name="CancelTraining" Grid.Row="5" Grid.Column="4" Content="Cancel" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Margin="3" />-->
+                <Button x:Name="RunTraining" Grid.Row="4" Grid.Column="0" Content="Run" HorizontalAlignment="Left" VerticalAlignment="Center" Width="75" Margin="3"/>
+                <TextBlock x:Name="RunTrainingValue" Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" Margin="3,5,0,5" HorizontalAlignment="Left" Width="69"/>
+                <ProgressBar x:Name="RunTrainingProgressBar" Grid.Row="4" Grid.Column="3" Height="10" VerticalAlignment="Center" Minimum="0"/>
+                <TextBlock x:Name="RunTrainingCount" Grid.Row="4" Grid.Column="4" Text="10" VerticalAlignment="Center" Margin="3"/>
 
             </Grid>
         </GroupBox>
@@ -92,11 +82,11 @@
         <GroupBox Header="Test set" Margin="10" Padding="10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="75"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="50"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="50"/>
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
@@ -107,24 +97,24 @@
                 </Grid.RowDefinitions>
 
                 <!--Load test set-->
-                <Button Grid.Row="0" Grid.Column="0" x:Name="LoadTestSet" Content="Load" VerticalAlignment="Center" Width="75" Margin="3"/>
+                <Button Grid.Row="0" Grid.Column="0" x:Name="LoadTestSet" Content="Load" VerticalAlignment="Center" HorizontalAlignment="Left" Width="75" Margin="3"/>
                 <ProgressBar Grid.Row="0" Grid.Column="3" x:Name="LoadTestSetProgressBar" Height="10" VerticalAlignment="Center"/>
 
                 <!--Test set size-->
-                <Label Grid.Row="1" Grid.Column="0" Content="Test set size" Margin="3"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="Test set size" HorizontalAlignment="Left" Margin="3"/>
                 <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TestSetSizeValue" Text="TextBlock" VerticalAlignment="Center" Margin="3"/>
                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Text="0" VerticalAlignment="Center" Margin="3"/>
                 <Slider Grid.Row="1" Grid.Column="3" x:Name="LoadTestSetSlider" VerticalAlignment="Center" />
                 <TextBlock Grid.Row="1" Grid.Column="4" x:Name="TestSetCount" Text="max" VerticalAlignment="Center" Margin="3"/>
 
                 <!--Run test-->
-                <Button Grid.Row="2" Grid.Column="0" x:Name="RunTest" Content="Run" VerticalAlignment="Center" Width="75" Margin="3"/>
+                <Button Grid.Row="2" Grid.Column="0" x:Name="RunTest" Content="Run" VerticalAlignment="Center" HorizontalAlignment="Left" Width="75" Margin="3"/>
                 <TextBlock Grid.Row="2" Grid.Column="1" x:Name="RunTestValue" VerticalAlignment="Center" Margin="3,5,0,5" HorizontalAlignment="Left" Width="69"/>
                 <ProgressBar Grid.Row="2" Grid.Column="3" x:Name="RunTestProgressBar" Height="10" VerticalAlignment="Center"/>
                 <TextBlock Grid.Row="2" Grid.Column="4" x:Name="RunTestCount" VerticalAlignment="Center" Margin="3"/>
 
                 <!--Result-->
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Result" VerticalAlignment="Center" Margin="3"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Result" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="3"/>
                 <TextBlock Grid.Row="3" Grid.Column="2" x:Name="Accuracy" HorizontalAlignment="Right" Text="100" VerticalAlignment="Center" Margin="3"/>
                 <TextBlock Grid.Row="3" Grid.Column="3" Text="% accuracy" VerticalAlignment="Center" Margin="3"/>
 
